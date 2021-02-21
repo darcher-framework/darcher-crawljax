@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "incremental": true,
+    "outDir": "scripts",
+    "types": [
+      "node",
+      "jest"
+    ]
+  },
+  "include": [
+    "scripts/**/*"
+  ]
+}

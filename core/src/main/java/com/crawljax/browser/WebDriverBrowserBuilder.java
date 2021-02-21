@@ -12,14 +12,19 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.logging.LogType;
+import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriverService;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.logging.Level;
 
 /**
  * Default implementation of the EmbeddedBrowserBuilder based on Selenium WebDriver API.
@@ -54,16 +59,26 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		EmbeddedBrowser browser = null;
 		EmbeddedBrowser.BrowserType browserType =
 				configuration.getBrowserConfig().getBrowserType();
+		String userDir = configuration.getBrowserConfig().getBrowserOptions().getUserDir();
+
+		// TODO troublor modify starts: only used in CHROME_EXISTING
+		String debuggerAddress = configuration.getBrowserConfig().getDebuggerAddress();
+		// troublor modify ends
 		try {
 			switch (browserType) {
 				case CHROME:
 					browser = newChromeBrowser(filterAttributes, crawlWaitReload, crawlWaitEvent,
-							false);
+							false, userDir);
 					break;
 				case CHROME_HEADLESS:
 					browser = newChromeBrowser(filterAttributes, crawlWaitReload,
-							crawlWaitEvent, true);
+							crawlWaitEvent, true, userDir);
 					break;
+                // TODO troublor modify starts
+                case CHROME_EXISTING:
+					browser = existingChromeBrowser(filterAttributes, crawlWaitReload,crawlWaitEvent, debuggerAddress);
+					break;
+                // troublor modify ends
 				case FIREFOX:
 					browser = newFirefoxBrowser(filterAttributes, crawlWaitReload, crawlWaitEvent,
 							false);
@@ -103,7 +118,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 	}
 
 	private EmbeddedBrowser newFirefoxBrowser(ImmutableSortedSet<String> filterAttributes,
-			long crawlWaitReload, long crawlWaitEvent, boolean headless) {
+											  long crawlWaitReload, long crawlWaitEvent, boolean headless) {
 
 		WebDriverManager.firefoxdriver().setup();
 
@@ -146,12 +161,31 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 				filterAttributes, crawlWaitReload, crawlWaitEvent);
 	}
 
+    // TODO troublor modify starts:
+	private EmbeddedBrowser existingChromeBrowser(ImmutableSortedSet<String> filterAttributes,
+												  long crawlWaitReload, long crawlWaitEvent, String debuggerAddress) {
+		WebDriverManager.chromedriver().setup();
+
+		ChromeOptions options = new ChromeOptions();
+		options.setExperimentalOption("debuggerAddress",debuggerAddress);
+		ChromeDriver driver = new ChromeDriver(options);
+
+		return WebDriverBackedEmbeddedBrowser.withDriver(driver, filterAttributes,
+				crawlWaitEvent, crawlWaitReload);
+	}
+    // troublor modify ends
+
 	private EmbeddedBrowser newChromeBrowser(ImmutableSortedSet<String> filterAttributes,
-			long crawlWaitReload, long crawlWaitEvent, boolean headless) {
+											 long crawlWaitReload, long crawlWaitEvent, boolean headless, String userDir) {
 
 		WebDriverManager.chromedriver().setup();
 
 		ChromeOptions optionsChrome = new ChromeOptions();
+
+		// set the profile path of browser, if it is provided
+		if (userDir != null) {
+			optionsChrome.addArguments("user-data-dir=" + userDir);
+		}
 
 		/* enables headless Chrome. */
 		if (headless) {
@@ -171,13 +205,19 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 
 		}
 
+		// Kristen modified part BEGIN
+		LoggingPreferences logPrefs = new LoggingPreferences();
+		logPrefs.enable(LogType.BROWSER, Level.SEVERE);
+		optionsChrome.setCapability("goog:loggingPrefs", logPrefs);
+		// Kristen modified part END
+
 		ChromeDriver driverChrome = new ChromeDriver(optionsChrome);
 		return WebDriverBackedEmbeddedBrowser.withDriver(driverChrome, filterAttributes,
 				crawlWaitEvent, crawlWaitReload);
 	}
 
 	private EmbeddedBrowser newPhantomJSDriver(ImmutableSortedSet<String> filterAttributes,
-			long crawlWaitReload, long crawlWaitEvent) {
+											   long crawlWaitReload, long crawlWaitEvent) {
 
 		WebDriverManager.phantomjs().setup();
 

@@ -12,6 +12,8 @@ import com.google.inject.assistedinject.Assisted;
 import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.UnexpectedTagNameException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -47,6 +49,9 @@ public class FormHandler {
 
 	/**
 	 * Fills in the element with the InputValues for input
+	 * // TODO troublor modify: support {@link com.crawljax.forms.FormInput.InputType#DYNAMIC},
+	 * {@link com.crawljax.forms.FormInput.InputType#FILE} and
+	 * {@link com.crawljax.forms.FormInput.InputType#CUSTOMIZE}
 	 *
 	 * @param element the node element
 	 * @param input   the input data
@@ -54,13 +59,24 @@ public class FormHandler {
 	protected void setInputElementValue(Node element, FormInput input) {
 
 		LOGGER.debug("INPUTFIELD: {} ({})", input.getIdentification(), input.getType());
-		if (element == null || input.getInputValues().isEmpty()) {
-			return;
+		// TODO troublor modify starts:
+		if (input.getType() != FormInput.InputType.DYNAMIC && input.getType() != FormInput.InputType.CUSTOMIZE) {
+			// troublor modify ends
+			if (element == null || input.getInputValues().isEmpty()) {
+				return;
+			}
+			// TODO troublor modify starts:
 		}
+		// troublor modify ends
+
 		try {
 
 			switch (input.getType()) {
+				// TODO troublor modify starts:
+				case FILE: // same as text, according to https://stackoverflow.com/a/9735909/8144892
+					// troublor modify ends
 				case TEXT:
+				case NUMBER:
 				case TEXTAREA:
 				case PASSWORD:
 					handleText(input);
@@ -76,6 +92,15 @@ public class FormHandler {
 					break;
 				case SELECT:
 					handleSelectBoxes(input);
+					// TODO troublor modify starts:
+					break;
+                case DYNAMIC:
+					handleDynamic(input, (Element) element);
+					break;
+                case CUSTOMIZE:
+                    handleCustomize(input, (Element) element);
+                    break;
+				// troublor modify ends
 			}
 
 		} catch (ElementNotVisibleException e) {
@@ -86,6 +111,27 @@ public class FormHandler {
 			LOGGER.error("Could not input element values", e);
 		}
 	}
+
+	// TODO troublor modify starts:
+	private void handleDynamic(FormInput input, Element node) {
+		FormInput.InputGenerator generator = input.getInputGenerator();
+		if (generator == null) {
+			return;
+		}
+		WebElement inputElement = browser.getWebElement(input.getIdentification());
+		String text = generator.generate(browser.getWebDriver(), inputElement, node).getValue();
+		if (null == text || text.length() == 0) {
+			return;
+		}
+		inputElement.clear();
+		inputElement.sendKeys(text);
+	}
+
+    private void handleCustomize(FormInput input, Element node) {
+        WebElement inputElement = browser.getWebElement(input.getIdentification());
+        input.getInputFiller().fillInput(browser.getWebDriver(), inputElement, node);
+    }
+	// troublor modify ends
 
 	private void handleCheckBoxes(FormInput input) {
 		for (InputValue inputValue : input.getInputValues()) {
@@ -113,7 +159,21 @@ public class FormHandler {
 	private void handleSelectBoxes(FormInput input) {
 		for (InputValue inputValue : input.getInputValues()) {
 			WebElement inputElement = browser.getWebElement(input.getIdentification());
-			inputElement.sendKeys(inputValue.getValue());
+			// TODO troublor modify starts: use Select class
+			try {
+				Select select = new Select(inputElement);
+				select.selectByValue(inputValue.getValue());
+				return;
+			} catch (UnexpectedTagNameException e) {
+				LOGGER.warn("FormInput with type SELECT on a non-select element");
+				return;
+			}
+
+			// comment out this line
+            // inputElement.sendKeys(inputValue.getValue());
+
+            // troublor modify ends
+
 		}
 	}
 
@@ -172,10 +232,23 @@ public class FormHandler {
 				nodes.add(nodeList.item(i));
 			}
 
+			// TODO troublor modify starts: get CUSTOMIZE input elements
+			for (FormInput formInput : formInputValueHelper.getCustomizeFormInputs()) {
+				nodeList = XPathHelper.evaluateXpathExpression(dom,
+						formInput.getIdentification().toXPath());
+				for (int i = 0; i < nodeList.getLength(); i++) {
+					nodes.add(nodeList.item(i));
+				}
+			}
+			// troublor modify ends
+
 			return nodes;
 		} catch (XPathExpressionException e) {
 			LOGGER.error(e.getMessage(), e);
 		}
+
+
+
 		return nodes;
 	}
 
@@ -190,7 +263,7 @@ public class FormHandler {
 			List<Node> nodes = getInputElements(dom);
 			for (Node node : nodes) {
 				FormInput formInput =
-						formInputValueHelper.getFormInputWithIndexValue(browser, node, 0);
+						formInputValueHelper.getFormInputWithIndexValue(browser, dom, node, 0);
 				if (formInput != null) {
 					formInputs.add(formInput);
 				}

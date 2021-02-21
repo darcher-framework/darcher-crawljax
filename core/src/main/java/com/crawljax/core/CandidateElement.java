@@ -91,6 +91,12 @@ public class CandidateElement {
 
 		result += this.identification + " " + relatedFrame;
 
+		// TODO troublor modify start: unique string should also consider FormInputs attached to this CandidateElement
+		for (FormInput input : this.formInputs) {
+			result += " input" + input.hashCode();
+		}
+		// troublor modify ends
+
 		return result;
 	}
 

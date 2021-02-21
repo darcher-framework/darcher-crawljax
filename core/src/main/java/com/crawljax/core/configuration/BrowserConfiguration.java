@@ -47,6 +47,19 @@ public class BrowserConfiguration {
 	private String lang;
 	private BrowserOptions browserOptions;
 
+	// TODO troublor modify starts
+	private String debuggerAddress;
+
+	public void setDebuggerAddress(String debuggerAddress) {
+		this.debuggerAddress = debuggerAddress;
+	}
+
+	public String getDebuggerAddress() {
+		return this.debuggerAddress;
+	}
+
+	// troublor modify ends
+
 	/**
 	 * @param numberOfBrowsers The number of browsers you'd like to use. They will be started as soon as the
 	 *                         crawl starts.
@@ -67,6 +80,13 @@ public class BrowserConfiguration {
 	public BrowserConfiguration(BrowserType browserType) {
 		this(browserType, 1);
 	}
+
+	// TODO troublor modify starts
+	public BrowserConfiguration(BrowserType browserType, String debuggerAddress) {
+		this(browserType, 1);
+		this.debuggerAddress = debuggerAddress;
+	}
+	// troublor modify starts
 
 	/**
 	 * @param browserType      The browser you'd like to use.

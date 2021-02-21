@@ -66,12 +66,38 @@ public class CrawlController implements Callable<CrawlSession> {
 		setMaximumCrawlTimeIfNeeded();
 		plugins.runPreCrawlingPlugins(config);
 		CrawlTaskConsumer firstConsumer = consumerFactory.get();
+		try {
+			// sleep for some time to wait for browser extensions loading
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			System.out.println("Warning: sleep being interrupted");
+		}
 		StateVertex firstState = firstConsumer.crawlIndex();
 		crawlSessionProvider.setup(firstState);
 		plugins.runOnNewStatePlugins(firstConsumer.getContext(), firstState);
 		executeConsumers(firstConsumer);
 		return crawlSessionProvider.get();
 	}
+
+	// Kristen Modification Begin
+	// Same function as call() but return CrawlTaskConsumer
+	public CrawlTaskConsumer callRtnConsumer() {
+		setMaximumCrawlTimeIfNeeded();
+		plugins.runPreCrawlingPlugins(config);
+		CrawlTaskConsumer firstConsumer = consumerFactory.get();
+		try {
+			// sleep for some time to wait for browser extensions loading
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			System.out.println("Warning: sleep being interrupted");
+		}
+		StateVertex firstState = firstConsumer.crawlIndex();
+		crawlSessionProvider.setup(firstState);
+		plugins.runOnNewStatePlugins(firstConsumer.getContext(), firstState);
+		executeConsumers(firstConsumer);
+		return firstConsumer;
+	}
+	// Kristen Modification End
 
 	/**
 	 * @return Same as {@link #call()}

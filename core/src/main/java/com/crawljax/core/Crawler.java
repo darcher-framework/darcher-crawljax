@@ -108,6 +108,7 @@ public class Crawler {
 	 * Reset the crawler to its initial state.
 	 */
 	public void reset() {
+		plugins.runPreResetPlugins(context);
 		CrawlSession session = context.getSession();
 		if (crawlpath != null) {
 			session.addCrawlPath(crawlpath);
@@ -123,8 +124,8 @@ public class Crawler {
 		browser.handlePopups();
 		browser.goToUrl(url);
 		// Checks the landing page for URL and sets the current page accordingly
-		checkOnURLState();
 		plugins.runOnUrlLoadPlugins(context);
+		checkOnURLState();
 		crawlDepth.set(0);
 	}
 
@@ -341,6 +342,11 @@ public class Crawler {
 
 		formHandler.handleFormElements(formInputs);
 
+		StateVertex newState = stateMachine.newStateFor(browser);
+		StateVertex clone = stateMachine.getStateFlowGraph().putIfAbsent(newState);
+		if (clone == null) {
+			parsePageForCandidateElements(newState);
+		}
 	}
 
 	/**
@@ -379,7 +385,8 @@ public class Crawler {
 		if (isFired) {
 			// Let the controller execute its specified wait operation on the browser thread safe.
 			waitConditionChecker.wait(browser);
-			browser.closeOtherWindows();
+//			browser.closeOtherWindows();
+			plugins.runOnFireEventSuccessPlugins(context, eventable, crawlpath.immutableCopyWithoutLast());
 			return true;
 		} else {
 			/*
@@ -559,6 +566,16 @@ public class Crawler {
 
 		plugins.runPreStateCrawlingPlugins(context, extract, currentState);
 		candidateActionCache.addActions(extract, currentState);
+		System.out.println(extract);
+	}
+
+	private void parsePageForCandidateElements(StateVertex currentState) {
+		LOG.debug("Parsing DOM of state {} for candidate elements", currentState.getName());
+		ImmutableList<CandidateElement> extract = candidateExtractor.extract(currentState);
+
+		plugins.runPreStateCrawlingPlugins(context, extract, currentState);
+		candidateActionCache.addActions(extract, currentState);
+		System.out.println(extract);
 	}
 
 	private void waitForRefreshTagIfAny(final Eventable eventable) {

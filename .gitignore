@@ -20,3 +20,8 @@ out/
 
 # Mac
 .DS_Store
+/crawl_paths/
+/node_modules/
+scripts/tsconfig.tsbuildinfo
+
+nohup.out

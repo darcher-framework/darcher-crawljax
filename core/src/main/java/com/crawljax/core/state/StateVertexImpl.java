@@ -6,8 +6,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.builder.Input;
+import org.xmlunit.diff.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 
@@ -18,151 +25,206 @@ import java.util.LinkedList;
  */
 public class StateVertexImpl implements StateVertex {
 
-	private static final long serialVersionUID = 123400017983488L;
+    private static final long serialVersionUID = 123400017983488L;
 
-	private final int id;
-	private final String dom;
-	private final String strippedDom;
-	private final String url;
-	private String name;
+    private final int id;
+    private final String dom;
+    private final String strippedDom;
+    private final String url;
+    private String name;
 
-	private transient ImmutableList<CandidateElement> candidateElements;
+    private transient ImmutableList<CandidateElement> candidateElements;
 
-	private boolean isNearDuplicate;
+    private boolean isNearDuplicate;
 
-	private int nearestState = -1;
+    private int nearestState = -1;
 
-	private double distToNearestState;
+    private double distToNearestState;
 
-	/**
-	 * Creates a current state without an url and the stripped dom equals the dom.
-	 *
-	 * @param name the name of the state
-	 * @param dom  the current DOM tree of the browser
-	 */
-	@VisibleForTesting StateVertexImpl(int id, String name, String dom) {
-		this(id, null, name, dom, dom);
-	}
+    /**
+     * Creates a current state without an url and the stripped dom equals the dom.
+     *
+     * @param name the name of the state
+     * @param dom  the current DOM tree of the browser
+     */
+    @VisibleForTesting
+    StateVertexImpl(int id, String name, String dom) {
+        this(id, null, name, dom, dom);
+    }
 
-	/**
-	 * Defines a State.
-	 *
-	 * @param url         the current url of the state
-	 * @param name        the name of the state
-	 * @param dom         the current DOM tree of the browser
-	 * @param strippedDom the stripped dom by the OracleComparators
-	 */
-	public StateVertexImpl(int id, String url, String name, String dom, String strippedDom) {
-		this.id = id;
-		this.url = url;
-		this.name = name;
-		this.dom = dom;
-		this.strippedDom = strippedDom;
-		this.distToNearestState = -1;
-	}
+    /**
+     * Defines a State.
+     *
+     * @param url         the current url of the state
+     * @param name        the name of the state
+     * @param dom         the current DOM tree of the browser
+     * @param strippedDom the stripped dom by the OracleComparators
+     */
+    public StateVertexImpl(int id, String url, String name, String dom, String strippedDom) {
+        this.id = id;
+        this.url = url;
+        this.name = name;
+        this.dom = dom;
+        this.strippedDom = strippedDom;
+        this.distToNearestState = -1;
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	@Override
-	public String getDom() {
-		return dom;
-	}
+    @Override
+    public String getDom() {
+        return dom;
+    }
 
-	@Override
-	public String getStrippedDom() {
-		return strippedDom;
-	}
+    @Override
+    public String getStrippedDom() {
+        return strippedDom;
+    }
 
-	@Override
-	public String getUrl() {
-		return url;
-	}
+    @Override
+    public String getUrl() {
+        return url;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(strippedDom);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(strippedDom);
+    }
 
-	@Override
-	public boolean equals(Object object) {
-		if (object instanceof StateVertex) {
-			StateVertex that = (StateVertex) object;
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof StateVertex) {
+            StateVertex that = (StateVertex) object;
+            // TODO troublor modify starts: use isSimilar()
+            return this.isSimilar(that);
+			/*
+			// troublor modify ends
 			return Objects.equal(this.strippedDom, that.getStrippedDom());
-		}
-		return false;
-	}
+			// TODO troublor modify starts: use isSimilar()
+			 */
+            // troublor modify ends
+        }
+        return false;
+    }
 
-	@Override
-	public String toString() {
-		return MoreObjects.toStringHelper(this)
-				.add("id", id)
-				.add("name", name)
-				.toString();
-	}
+    // TODO troublor modify starts: implement isSimilar()
+    @Override
+    public boolean isSimilar(StateVertex that) {
+        try {
+            Diff diff = DiffBuilder.compare(Input.fromDocument(DomUtils.asDocument(this.strippedDom)))
+                    .withTest(Input.fromDocument(DomUtils.asDocument(that.getStrippedDom())))
+                    .checkForSimilar()
+                    .ignoreComments()
+                    .ignoreWhitespace()
+                    .normalizeWhitespace()
+                    .withComparisonController(ComparisonControllers.StopWhenDifferent)
+                    .withDifferenceEvaluator(new TolerateAttributeEvaluator())
+                    .build();
+            return !diff.hasDifferences();
+        } catch (IOException e) {
+            return false;
+        }
+    }
+    // troublor modify ends
 
-	@Override
-	public int getId() {
-		return id;
-	}
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("id", id)
+                .add("name", name)
+                .toString();
+    }
 
-	@Override
-	public Document getDocument() throws IOException {
-		return DomUtils.asDocument(this.dom);
-	}
+    @Override
+    public int getId() {
+        return id;
+    }
 
-	@Override
-	public void setElementsFound(LinkedList<CandidateElement> elements) {
-		this.candidateElements = ImmutableList.copyOf(elements);
+    @Override
+    public Document getDocument() throws IOException {
+        return DomUtils.asDocument(this.dom);
+    }
 
-	}
+    @Override
+    public void setElementsFound(LinkedList<CandidateElement> elements) {
+        this.candidateElements = ImmutableList.copyOf(elements);
 
-	@Override
-	public ImmutableList<CandidateElement> getCandidateElements() {
-		return candidateElements;
-	}
+    }
 
-	@Override
-	public boolean hasNearDuplicate() {
-		return isNearDuplicate;
-	}
+    @Override
+    public ImmutableList<CandidateElement> getCandidateElements() {
+        return candidateElements;
+    }
 
-	@Override
-	public void setNearestState(int vertex) {
-		this.nearestState = vertex;
-	}
+    @Override
+    public boolean hasNearDuplicate() {
+        return isNearDuplicate;
+    }
 
-	@Override
-	public void setHasNearDuplicate(boolean b) {
-		this.isNearDuplicate = b;
-	}
+    @Override
+    public void setNearestState(int vertex) {
+        this.nearestState = vertex;
+    }
 
-	@Override
-	public int getNearestState() {
-		return this.nearestState;
-	}
+    @Override
+    public void setHasNearDuplicate(boolean b) {
+        this.isNearDuplicate = b;
+    }
 
-	@Override
-	public boolean inThreshold(StateVertex vertexOfGraph) {
-		// Only implemented when there is a threshold for near duplicates
-		return false;
-	}
+    @Override
+    public int getNearestState() {
+        return this.nearestState;
+    }
 
-	@Override
-	public double getDistToNearestState() {
-		return distToNearestState;
-	}
+    @Override
+    public boolean inThreshold(StateVertex vertexOfGraph) {
+        // Only implemented when there is a threshold for near duplicates
+        return false;
+    }
 
-	@Override
-	public void setDistToNearestState(double distToNearestState) {
-		this.distToNearestState = distToNearestState;
-	}
+    @Override
+    public double getDistToNearestState() {
+        return distToNearestState;
+    }
 
-	@Override
-	public double getDist(StateVertex vertexOfGraph) {
-		// Return proper value when implemented
-		return -1;
-	}
+    @Override
+    public void setDistToNearestState(double distToNearestState) {
+        this.distToNearestState = distToNearestState;
+    }
+
+    @Override
+    public double getDist(StateVertex vertexOfGraph) {
+        // Return proper value when implemented
+        return -1;
+    }
+
+    static class TolerateAttributeEvaluator implements DifferenceEvaluator {
+        String[] canonicalKeywords = new String[]{
+                "data",
+                "value",
+                "content",
+                "id"
+        };
+
+        public ComparisonResult evaluate(Comparison comparison, ComparisonResult comparisonResult) {
+            if (comparisonResult == ComparisonResult.EQUAL) return comparisonResult;
+            Node node = comparison.getControlDetails().getTarget();
+            if (node instanceof Attr) {
+//                Attr attr = (Attr) node;
+//                for (String kw : canonicalKeywords) {
+//                    if (attr.getName().toLowerCase().contains(kw.toLowerCase())) {
+//                        return ComparisonResult.DIFFERENT;
+//                    }
+//                }
+                return ComparisonResult.SIMILAR;
+            }
+            if (node instanceof Text) {
+                return ComparisonResult.SIMILAR;
+            }
+            return comparisonResult;
+        }
+    }
 }

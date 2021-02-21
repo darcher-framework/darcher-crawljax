@@ -120,7 +120,8 @@ public final class CrawlElement {
 	 */
 	public CrawlElement withText(String text) {
 		if (this.underXpath == null || this.underXpath.isEmpty()) {
-			this.underXpath = "//" + this.tagName + "[text()=" + escapeApostrophes(text) + "]";
+			this.underXpath =
+					"//" + this.tagName + "[text()=" + escapeApostrophes(text) + " or .="+escapeApostrophes(text)+"]";
 		} else {
 			this.underXpath = this.underXpath + " | " + "//" + this.tagName + "[text()="
 					+ escapeApostrophes(text) + "]";

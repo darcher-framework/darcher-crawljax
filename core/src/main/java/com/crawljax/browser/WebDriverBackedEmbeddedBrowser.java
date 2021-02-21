@@ -23,6 +23,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
 import org.openqa.selenium.remote.HttpCommandExecutor;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.slf4j.Logger;
@@ -267,13 +268,17 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 			return;
 		}
 
-		if (ExpectedConditions.alertIsPresent().apply(browser) != null) {
-			try {
-				browser.switchTo().alert().accept();
-				LOGGER.info("Alert accepted");
-			} catch (Exception e) {
-				LOGGER.error("Handling of PopUp windows failed");
+		try {
+			Alert alert = ExpectedConditions.alertIsPresent().apply(browser);
+			if (alert != null) {
+				try {
+					alert.accept();
+					LOGGER.info("Alert accepted");
+				} catch (Exception e) {
+					LOGGER.error("Handling of PopUp windows failed");
+				}
 			}
+		} catch (NoSuchWindowException ignored) {
 		}
 	}
 
@@ -290,7 +295,8 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 		switch (eventable.getEventType()) {
 			case click:
 				try {
-					webElement.click();
+//					webElement.click();
+					((JavascriptExecutor) getWebDriver()).executeScript("arguments[0].click()", webElement);
 				} catch (ElementNotInteractableException e) {
 					throw e;
 				} catch (WebDriverException e) {

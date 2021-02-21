@@ -29,6 +29,23 @@
 			<artifactId>testng</artifactId>
 			<version>7.0.0-beta1</version>
 		</dependency>
+        <dependency>
+            <groupId>com.crawljax.plugins</groupId>
+            <artifactId>metamask-support-plugin</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+		<dependency>
+			<groupId>com.crawljax.plugins</groupId>
+			<artifactId>grpc-client-plugin</artifactId>
+			<version>4.2-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.web3j</groupId>
+			<artifactId>core</artifactId>
+			<version>4.8.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -65,6 +82,31 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>xyz.troublor.crawljax.experiments.ExperimentLauncher</mainClass>
+					<arguments>
+						<!--suppress UnresolvedMavenProperty -->
+						<argument>${env.COVERAGE_DIR}</argument>
+						<!--suppress UnresolvedMavenProperty -->
+						<argument>${env.STATUS_LOG_PATH}</argument>
+						<!--suppress UnresolvedMavenProperty -->
+						<argument>${env.CHROME_DEBUGGER_ADDRESS}</argument>
+						<!--suppress UnresolvedMavenProperty -->
+						<argument>${env.SUBJECT}</argument>
+					</arguments>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

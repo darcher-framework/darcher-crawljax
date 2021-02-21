@@ -46,7 +46,7 @@ public class HtmlNamespace implements NamespaceContext {
 	 * @return TODO: DOCUMENT ME!
 	 */
 	@Override
-	public Iterator<?> getPrefixes(String uri) {
+	public Iterator getPrefixes(String uri) {
 		throw new UnsupportedOperationException();
 	}
 }

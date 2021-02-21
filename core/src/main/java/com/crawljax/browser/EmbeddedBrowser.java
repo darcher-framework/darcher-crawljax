@@ -22,6 +22,9 @@ public interface EmbeddedBrowser {
 	 * Browser types.
 	 */
 	enum BrowserType {
+		// TODO troublor modify starts
+		CHROME_EXISTING,
+		// troublor modify ends
 		CHROME, CHROME_HEADLESS, FIREFOX, FIREFOX_HEADLESS, PHANTOMJS, REMOTE
 	}
 

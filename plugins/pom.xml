@@ -55,5 +55,7 @@
 		<module>test-plugin</module>
 		<!-- <module>clickable-detector</module> -->
 		<module>testcasegenerator-plugin</module>
-  </modules>
+        <module>metamask-support-plugin</module>
+		<module>grpc-client-plugin</module>
+    </modules>
 </project>

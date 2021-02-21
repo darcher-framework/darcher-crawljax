@@ -214,6 +214,7 @@ public class CrawlOverview
         for (State state : result.getStates().values()) {
             try {
                 writer.writeHtmlForState(state);
+                System.out.println(state);
             } catch (Exception Ex) {
                 LOG.info("couldn't write state :" + state.getName());
             }

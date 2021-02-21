@@ -42,7 +42,9 @@ public class Plugins {
 					OnInvariantViolationPlugin.class, OnNewStatePlugin.class,
 					OnRevisitStatePlugin.class, OnUrlLoadPlugin.class,
 					PostCrawlingPlugin.class, PreStateCrawlingPlugin.class,
-					PreCrawlingPlugin.class, OnUrlFirstLoadPlugin.class);
+					PreCrawlingPlugin.class, OnUrlFirstLoadPlugin.class,
+					OnFireEventSucceededPlugin.class,
+					PreResetPlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -312,6 +314,23 @@ public class Plugins {
 		}
 	}
 
+	public void runOnFireEventSuccessPlugins(CrawlerContext context,
+											 Eventable eventable, List<Eventable> path) {
+		LOGGER.debug("Running OnFireEventSuccessPlugins...");
+		counters.get(OnFireEventSucceededPlugin.class).inc();
+		for (Plugin plugin : plugins.get(OnFireEventSucceededPlugin.class)) {
+			if (plugin instanceof OnFireEventSucceededPlugin) {
+				LOGGER.debug("Calling plugin {}", plugin);
+				try {
+					((OnFireEventSucceededPlugin) plugin).onFireEventSucceeded(
+							context, eventable, path);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
+	}
+
 	/**
 	 * Load and run the OnBrowserCreatedPlugins, this call has been made from the browser pool when a
 	 * new browser has been created and ready to be used by the Crawler. The PreCrawling plugins are
@@ -380,7 +399,21 @@ public class Plugins {
 				}
 			}
 		}
+	}
 
+	public void runPreResetPlugins(CrawlerContext context) {
+		LOGGER.debug("Running PreResetPlugins...");
+		counters.get(PreResetPlugin.class).inc();
+		for (Plugin plugin : plugins.get(PreResetPlugin.class)) {
+			if (plugin instanceof PreResetPlugin) {
+				try {
+					LOGGER.debug("Calling plugin {}", plugin);
+					((PreResetPlugin) plugin).preReset(context);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
 	}
 
 }

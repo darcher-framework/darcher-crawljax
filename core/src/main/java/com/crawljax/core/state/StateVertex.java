@@ -82,4 +82,8 @@ public interface StateVertex extends Serializable {
 
 	void setNearestState(int vertex);
 
+	// TODO troublor modify starts: add similarity check, an alternative to StateVertex
+	boolean isSimilar(StateVertex that);
+	// troublor modify ends
+
 }

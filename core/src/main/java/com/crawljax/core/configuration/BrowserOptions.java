@@ -5,6 +5,8 @@ public class BrowserOptions {
 	public static final int MACBOOK_PRO_RETINA_PIXEL_DENSITY = 2;
 	private boolean headless;
 	private int pixelDensity;
+	// browser profile path
+	private String userDir;
 
 	public BrowserOptions() {
 		this.headless = false;
@@ -38,12 +40,26 @@ public class BrowserOptions {
 		this.pixelDensity = pixelDensity;
 	}
 
+	/**
+	 * @param userDir The path of the profile used for browser.
+	 */
+	public BrowserOptions(String userDir) {
+		super();
+		this.headless = false;
+		this.pixelDensity = -1;
+		this.userDir = userDir;
+	}
+
 	public boolean isHeadless() {
 		return this.headless;
 	}
 
 	public int getPixelDensity() {
 		return pixelDensity;
+	}
+
+	public String getUserDir() {
+		return userDir;
 	}
 
 	@Override

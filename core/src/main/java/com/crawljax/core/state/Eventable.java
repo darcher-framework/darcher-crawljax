@@ -168,6 +168,7 @@ public class Eventable extends DefaultEdge implements Serializable {
 	 */
 	public void setRelatedFormInputs(CopyOnWriteArrayList<FormInput> relatedFormInputs) {
 		this.relatedFormInputs = relatedFormInputs;
+
 	}
 
 	/**

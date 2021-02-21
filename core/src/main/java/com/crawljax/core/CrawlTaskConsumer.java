@@ -18,7 +18,9 @@ public class CrawlTaskConsumer implements Callable<Void> {
 
 	private final AtomicInteger runningConsumers;
 
-	private final Crawler crawler;
+	// Kristen Modification Begin
+	public final Crawler crawler;
+	// Kristen Modification End
 
 	private final UnfiredCandidateActions candidates;
 

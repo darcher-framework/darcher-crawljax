@@ -4,6 +4,7 @@ import com.crawljax.core.ExitNotifier.ExitStatus;
 import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.configuration.InputSpecification;
 import com.crawljax.core.plugin.PostCrawlingPlugin;
+import com.crawljax.core.state.StateVertex;
 import com.crawljax.di.CoreModule;
 import com.crawljax.forms.FormInput;
 import com.crawljax.forms.FormInputValueHelper;
@@ -60,6 +61,17 @@ public class CrawljaxRunner implements Callable<CrawlSession> {
 		reason = controller.getReason();
 		return session;
 	}
+
+	// Kristen Modification Begin
+	// Same function as call() but return CrawlTaskConsumer
+	public CrawlTaskConsumer callRtnConsumer() {
+		Injector injector = Guice.createInjector(new CoreModule(config));
+		controller = injector.getInstance(CrawlController.class);
+		CrawlTaskConsumer consumer = controller.callRtnConsumer();
+		reason = controller.getReason();
+		return consumer;
+	}
+	// Kristen Modification End
 
 	/**
 	 * Stops Crawljax. It will try to shutdown gracefully and run the {@link PostCrawlingPlugin}s.

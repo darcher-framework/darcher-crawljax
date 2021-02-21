@@ -256,6 +256,15 @@ public class CandidateElementExtractor {
 			String id = element.getNodeName() + ": " + DomUtils.getAllElementAttributes(element);
 			if (matchesXpath && !checkedElements.isChecked(id)
 					&& !isExcluded(dom, element, eventableConditionChecker)) {
+				// TODO troublor modify starts: special case, when tag is DIV, the xpath need to be exactly equal;
+				//  this is because I don't understand why the matchesXpath above uses under but not exactly match,
+				//  so I only check exactly match for "DIV" tags
+				if (element.getTagName().toUpperCase().equals("DIV") &&
+						!expressions.contains(XPathHelper.getXPathExpression(element))) {
+					continue;
+				}
+				// troublor modify ends
+
 				addElement(element, result, crawlElement);
 			} else {
 				LOG.debug("Element {} was not added", element);
@@ -362,6 +371,17 @@ public class CandidateElementExtractor {
 				LOG.debug("Found new candidate element: {} with eventableCondition {}",
 						candidateElement.getUniqueString(), eventableCondition);
 				candidateElement.setEventableCondition(eventableCondition);
+
+				// TODO troublor modify starts: check if there is already a candidate element in the results that
+				//  doesn't have FormInputs (this is usually the case that we have global BUTTON crawlElement but
+				//  later specify a Form on some BUTTON)
+                // FormInputs are only appended in candidate.getUniqueString()
+                // so if
+                results.removeIf(candidate ->
+                        candidate.getGeneralString().equals(candidateElement.getGeneralString()) &&
+                        candidate.getFormInputs().size() == 0);
+				// troublor modify ends
+
 				results.add(candidateElement);
 				/*
 				 * TODO add element to checkedElements after the event is fired! also add string

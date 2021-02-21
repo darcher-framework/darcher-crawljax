@@ -71,6 +71,23 @@ public class Identification implements Serializable {
 		this.value = value;
 	}
 
+	public String toXPath() {
+		switch (this.how) {
+			case xpath:
+				return this.value;
+			case id:
+				return "//*[@id='" + this.value + "']";
+			case tag:
+				return "//" + this.value;
+			case name:
+				return "//*[@name='" + this.value + "']";
+			case text:
+			case partialText:
+			default:
+				return "Text/PartialText identification cannot be converted to xpath";
+		}
+	}
+
 	/**
 	 * Convert a Identification to a String.
 	 *
