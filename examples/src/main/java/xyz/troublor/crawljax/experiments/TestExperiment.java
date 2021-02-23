@@ -18,7 +18,7 @@ public class TestExperiment extends Experiment {
     private static final String DAPP_NAME = "Test DApp";
     private static int instanceId = 1;
     private static final String METAMASK_POPUP_URL = "chrome-extension://jbppcachblnkaogkgacckpgohjbpcekf/home.html";
-    private static final String METAMASK_PASSWORD = "12345678";
+    private static final String METAMASK_PASSWORD = System.getenv("METAMASK_PASSWORD");
     private static final String BROWSER_PROFILE_PATH = "/Users/troublor/workspace/darcher_mics/browsers/Chrome/UserData";
 
 

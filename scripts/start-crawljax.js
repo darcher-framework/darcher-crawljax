@@ -10,21 +10,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startCrawljax = void 0;
-const prompts_1 = require("prompts");
+const prompts = require("prompts");
 const path = require("path");
 const fs = require("fs");
 const parse_duration_1 = require("parse-duration");
 const child_process = require("child_process");
 const helpers_1 = require("@darcher/helpers");
 class Worker {
-    constructor(logger, chromeDebuggerAddress, subject) {
+    constructor(logger, chromeDebuggerAddress, metamaskUrl, metamaskPassword, subject) {
         this.logger = logger;
         this.chromeDebuggerAddress = chromeDebuggerAddress;
+        this.metamaskUrl = metamaskUrl;
+        this.metamaskPassword = metamaskPassword;
         this.subject = subject;
         this.started = false;
-        if (fs.existsSync(Worker.coverageDir)) {
-            fs.rmdirSync(Worker.coverageDir, { recursive: true });
-        }
+        // if (fs.existsSync(Worker.coverageDir)) {
+        //     fs.rmdirSync(Worker.coverageDir, {recursive: true});
+        // }
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -65,11 +67,13 @@ class Worker {
                 STATUS_LOG_PATH: Worker.statusFile,
                 CHROME_DEBUGGER_ADDRESS: this.chromeDebuggerAddress,
                 SUBJECT: this.subject,
+                METAMASK_URL: this.metamaskUrl,
+                METAMASK_PASSWORD: this.metamaskPassword,
             }),
         });
         this.process.on("exit", () => {
             // if the process exit by itself, we set this.process = null
-            this.process = null;
+            // this.process = null;
         });
         this.process.on("error", err => {
             this.logger.warn(err.message);
@@ -113,7 +117,7 @@ Worker.stdoutFile = path.join(__dirname, "stdout.log");
 Worker.stderrFile = path.join(__dirname, "stderr.log");
 Worker.statusFile = path.join(__dirname, "status.log");
 Worker.coverageDir = path.join(__dirname, "coverage", "client");
-function startCrawljax(logger, chromeDebuggerAddress, mainClass, timeBudget, logDir) {
+function startCrawljax(logger, chromeDebuggerAddress, metamaskUrl, metamaskPassword, mainClass, timeBudget, logDir) {
     return __awaiter(this, void 0, void 0, function* () {
         if (logDir) {
             Worker.stdoutFile = path.join(logDir, "crawljax.stdout.log");
@@ -124,7 +128,7 @@ function startCrawljax(logger, chromeDebuggerAddress, mainClass, timeBudget, log
         // eslint-disable-next-line no-async-promise-executor
         return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
             let shouldContinue = true;
-            const subprocess = new Worker(logger, chromeDebuggerAddress, mainClass);
+            const subprocess = new Worker(logger, chromeDebuggerAddress, metamaskUrl, metamaskPassword, mainClass);
             yield subprocess.start();
             // watch status of crawljax, since crawljax cannot exit by itself
             const checkCrawljaxStatue = () => {
@@ -196,7 +200,7 @@ if (require.main === module) {
             }
             return null;
         };
-        const response0 = yield prompts_1.default({
+        const response0 = yield prompts({
             type: "text",
             name: "mainClass",
             message: "What is the main class?",
@@ -206,7 +210,7 @@ if (require.main === module) {
         const parseTimeBudget = (budget) => {
             return parse_duration_1.default(budget, "s");
         };
-        const response1 = yield prompts_1.default({
+        const response1 = yield prompts({
             type: "text",
             name: "timeBudget",
             message: "What is the time budget?",
@@ -218,7 +222,7 @@ if (require.main === module) {
             subject: path.basename(response0.mainClass),
             timeBudget: response1.timeBudget + "s",
         });
-        yield startCrawljax(logger, "localhost:9222", response0.mainClass, response1.timeBudget);
+        yield startCrawljax(logger, "localhost:9222", "chrome-extension://cihfjnmdkdfgilhaaiepgmdgglglhjbh/home.html", "12345678", response0.mainClass, response1.timeBudget);
     }))();
 }
 //# sourceMappingURL=start-crawljax.js.map

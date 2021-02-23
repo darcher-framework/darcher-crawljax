@@ -21,6 +21,8 @@ class Worker {
     constructor(
         private readonly logger: Logger,
         private readonly chromeDebuggerAddress: string,
+        private readonly metamaskUrl: string,
+        private readonly metamaskPassword: string,
         private readonly subject: string,
     ) {
         // if (fs.existsSync(Worker.coverageDir)) {
@@ -69,6 +71,8 @@ class Worker {
                     STATUS_LOG_PATH: Worker.statusFile,
                     CHROME_DEBUGGER_ADDRESS: this.chromeDebuggerAddress,
                     SUBJECT: this.subject,
+                    METAMASK_URL: this.metamaskUrl,
+                    METAMASK_PASSWORD: this.metamaskPassword,
                 }),
             });
         this.process.on("exit", () => {
@@ -117,7 +121,7 @@ class Worker {
     }
 }
 
-export async function startCrawljax(logger: Logger, chromeDebuggerAddress: string, mainClass: string, timeBudget: number, logDir?: string) {
+export async function startCrawljax(logger: Logger, chromeDebuggerAddress: string, metamaskUrl: string, metamaskPassword: string, mainClass: string, timeBudget: number, logDir?: string) {
     if (logDir) {
         Worker.stdoutFile = path.join(logDir, "crawljax.stdout.log");
         Worker.stderrFile = path.join(logDir, "crawljax.stderr.log");
@@ -134,7 +138,7 @@ export async function startCrawljax(logger: Logger, chromeDebuggerAddress: strin
             | "Stopped manually";
 
         let shouldContinue = true;
-        const subprocess: Worker = new Worker(logger, chromeDebuggerAddress, mainClass);
+        const subprocess: Worker = new Worker(logger, chromeDebuggerAddress, metamaskUrl, metamaskPassword, mainClass);
         await subprocess.start();
 
         // watch status of crawljax, since crawljax cannot exit by itself
@@ -152,25 +156,25 @@ export async function startCrawljax(logger: Logger, chromeDebuggerAddress: strin
             }
             logger.info("Crawljax status updated", {status: status});
             switch (status) {
-            case "Errored":
-            case "Stopped manually":
-                // should stop the process ahead
-                await subprocess.stop();
-                break;
-            case "Maximum time passed":
-            case "Maximum states passed":
-            case "Exhausted":
-                // should stop the process ahead
-                await subprocess.stop();
-                if (shouldContinue) {
-                    if (fs.existsSync(Worker.statusFile)) {
-                        fs.unlinkSync(Worker.statusFile);
+                case "Errored":
+                case "Stopped manually":
+                    // should stop the process ahead
+                    await subprocess.stop();
+                    break;
+                case "Maximum time passed":
+                case "Maximum states passed":
+                case "Exhausted":
+                    // should stop the process ahead
+                    await subprocess.stop();
+                    if (shouldContinue) {
+                        if (fs.existsSync(Worker.statusFile)) {
+                            fs.unlinkSync(Worker.statusFile);
+                        }
+                        await subprocess.start();
                     }
-                    await subprocess.start();
-                }
-                break;
-            default:
-                logger.warn("Unknown crawljax status", {status});
+                    break;
+                default:
+                    logger.warn("Unknown crawljax status", {status});
             }
         }, 500);
         setTimeout(async () => {
@@ -233,6 +237,6 @@ if (require.main === module) {
             timeBudget: response1.timeBudget + "s",
         });
 
-        await startCrawljax(logger, "localhost:9222", response0.mainClass, response1.timeBudget);
+        await startCrawljax(logger, "localhost:9222", "chrome-extension://cihfjnmdkdfgilhaaiepgmdgglglhjbh/home.html", "12345678", response0.mainClass, response1.timeBudget);
     })();
 }

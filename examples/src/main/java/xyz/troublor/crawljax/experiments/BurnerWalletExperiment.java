@@ -19,8 +19,8 @@ public class BurnerWalletExperiment extends Experiment {
     private static final String DAPP_URL = "http://localhost:3000";
     private static final String DAPP_NAME = "burner-wallet";
     private static int instanceId = 1;
-    private static final String METAMASK_POPUP_URL = "chrome-extension://kdaoeelmbdcinklhldlcmmgmndjcmjpp/home.html";
-    private static final String METAMASK_PASSWORD = "12345678";
+    private static final String METAMASK_POPUP_URL = System.getenv("METAMASK_URL");
+    private static final String METAMASK_PASSWORD = System.getenv("METAMASK_PASSWORD");
 
     private static final String mainAccountAddress = "0x6463F93D65391A8B7c98f0fc8439eFD5d38339d9";
 

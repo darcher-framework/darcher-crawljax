@@ -17,8 +17,8 @@ public class SovereignExperiment extends Experiment {
     private static final String DAPP_URL = "http://localhost:3000";
     private static final String DAPP_NAME = "sovereign";
     private static int instanceId = 1;
-    private static final String METAMASK_POPUP_URL = "chrome-extension://kdaoeelmbdcinklhldlcmmgmndjcmjpp/home.html";
-    private static final String METAMASK_PASSWORD = "12345678";
+    private static final String METAMASK_POPUP_URL = System.getenv("METAMASK_URL");
+    private static final String METAMASK_PASSWORD = System.getenv("METAMASK_PASSWORD");
 
     /**
      * Run this method to start the crawl.

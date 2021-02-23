@@ -25,8 +25,8 @@ public class ReactEthereumMetacoinExperiment extends Experiment {
     private static final String DAPP_URL = "http://localhost:3000";
     private static final String DAPP_NAME = "publicvotes";
     private static int instanceId = 1;
-    private static final String METAMASK_POPUP_URL = "chrome-extension://kdaoeelmbdcinklhldlcmmgmndjcmjpp/home.html";
-    private static final String METAMASK_PASSWORD = "12345678";
+    private static final String METAMASK_POPUP_URL = System.getenv("METAMASK_URL");
+    private static final String METAMASK_PASSWORD = System.getenv("METAMASK_PASSWORD");
 
     private static final String mainAddress = "0x6463F93D65391A8B7c98f0fc8439eFD5d38339d9";
     private static final String otherAddress = "0xBA394B1eAFCBBcE84939103E2f443B80111be596";
