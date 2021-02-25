@@ -186,7 +186,7 @@ if (require.main === module) {
          * @return path to main class
          */
         const findMainClass = (name) => {
-            const examplesDir = path.join(__dirname, "..", "examples", "src", "main", "java", "xyz", "troublor", "crawljax", "experiments");
+            const examplesDir = path.join(__dirname, "..", "examples", "src", "main", "java", "com", "darcher", "crawljax", "experiments");
             for (const file of fs.readdirSync(examplesDir)) {
                 if (path.extname(file) !== ".java") {
                     continue;
